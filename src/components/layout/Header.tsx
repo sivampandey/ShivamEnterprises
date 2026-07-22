@@ -65,14 +65,14 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* ALWAYS VISIBLE Download / Install App Button */}
           <Button
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={handleInstallClick}
-            icon={<Download className="w-4 h-4 text-brass-600 dark:text-brass-400" />}
-            className="border-brass-400 dark:border-brass-700 text-brass-800 dark:text-brass-300 hover:bg-brass-50 dark:hover:bg-brass-900/40"
+            icon={<Download className="w-4 h-4 text-white" />}
+            className="bg-brass-500 hover:bg-brass-600 text-white font-bold shadow-sm"
             title="Download App on Device"
           >
-            <span className="font-semibold">Download App</span>
+            <span>Download App</span>
           </Button>
 
           {/* Light / Dark Mode Toggle Button */}
