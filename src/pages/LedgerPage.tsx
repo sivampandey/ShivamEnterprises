@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FC, ChangeEvent, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { labourerApi } from '../api/labourerApi';
 import { LabourerLedgerDetail, LedgerEntry } from '../api/types';
@@ -23,7 +22,7 @@ import {
   CheckCheck,
 } from 'lucide-react';
 
-export const LedgerPage: React.FC = () => {
+export const LedgerPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 

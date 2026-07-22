@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import { useState, FC, FormEvent } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -7,7 +6,7 @@ import { Store, Lock, User as UserIcon, Sun, Moon, ShieldCheck, KeyRound } from 
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 
-export const LoginPage: React.FC = () => {
+export const LoginPage: FC = () => {
   const { login, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();

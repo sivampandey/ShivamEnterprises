@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FC, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsApi } from '../api/reportsApi';
 import { MonthlyReportSummary } from '../api/types';
@@ -19,7 +18,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-export const ReportsPage: React.FC = () => {
+export const ReportsPage: FC = () => {
   const [month, setMonth] = useState<string>(getCurrentMonthISO());
   const [report, setReport] = useState<MonthlyReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);

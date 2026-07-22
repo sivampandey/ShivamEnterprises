@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { labourerApi } from '../api/labourerApi';
 import { Labourer } from '../api/types';
@@ -21,7 +20,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 
-export const LabourersPage: React.FC = () => {
+export const LabourersPage: FC = () => {
   const navigate = useNavigate();
   const [labourers, setLabourers] = useState<Labourer[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
