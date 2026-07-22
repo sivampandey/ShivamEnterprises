@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Monospace / Tabular numerals for currency */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'Courier Prime', monospace;
+}
+
+/* Rubber Ink Stamp Animation & Effect */
+.stamp-btn {
+  position: relative;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.stamp-btn:active {
+  transform: scale(0.95) translateY(1px);
+}
+
+.stamp-btn-present.active {
+  background-color: #4C7A52;
+  color: #FFFFFF;
+  border-color: #385B3D;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(76, 122, 82, 0.3);
+}
+
+.stamp-btn-half.active {
+  background-color: #B9812E;
+  color: #FFFFFF;
+  border-color: #8C5F1D;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(185, 129, 46, 0.3);
+}
+
+.stamp-btn-absent.active {
+  background-color: #A13D3D;
+  color: #FFFFFF;
+  border-color: #782D2D;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(161, 61, 61, 0.3);
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(185, 129, 46, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(185, 129, 46, 0.6);
+}
