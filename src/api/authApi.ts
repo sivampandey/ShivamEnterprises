@@ -25,9 +25,16 @@ export const authApi = {
         },
       };
     } catch (e: any) {
+      if (e.response?.status === 404) {
+        throw new Error(
+          'Backend API endpoint not found (404). Please set VITE_API_BASE_URL in Vercel to your Render URL (e.g. https://your-backend.onrender.com/api).'
+        );
+      }
       const errorMessage =
         e.response?.data?.error?.message ||
-        e.response?.data?.message ||
+        (typeof e.response?.data?.message === 'string' && e.response.data.message !== 'The page could not be found'
+          ? e.response.data.message
+          : null) ||
         (e.response?.status === 401 ? 'Invalid username or password.' : 'Failed to connect to authentication server.');
       throw new Error(errorMessage);
     }
