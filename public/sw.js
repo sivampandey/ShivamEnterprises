@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shivam-ledger-v1';
+const CACHE_NAME = 'shivam-ledger-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -35,26 +35,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass API calls through network directly
+  // Pass all API requests directly through live network
   if (event.request.url.includes('/api/')) {
     return;
   }
 
+  // Network first strategy for instant live updates across App and Website
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
-      });
-    })
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });

@@ -13,6 +13,14 @@ export const Header: React.FC = () => {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
   const [installedSuccess, setInstalledSuccess] = useState<boolean>(false);
 
+  // Detect if running inside Installed App (standalone mode)
+  const [isAppInstalled, setIsAppInstalled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true ||
+      document.referrer.includes('android-app://');
+  });
+
   useEffect(() => {
     // Check if global prompt was captured before component mount
     if ((window as unknown as Record<string, unknown>).deferredPwaPrompt) {
@@ -26,9 +34,23 @@ export const Header: React.FC = () => {
       (window as unknown as Record<string, unknown>).deferredPwaPrompt = pwaEvent;
     };
 
+    const matchMedia = window.matchMedia('(display-mode: standalone)');
+    const handleStandaloneChange = (e: MediaQueryListEvent) => {
+      setIsAppInstalled(e.matches);
+    };
+    matchMedia.addEventListener('change', handleStandaloneChange);
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setInstalledSuccess(true);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+      matchMedia.removeEventListener('change', handleStandaloneChange);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -41,6 +63,7 @@ export const Header: React.FC = () => {
         if (outcome === 'accepted') {
           setDeferredPrompt(null);
           (window as unknown as Record<string, unknown>).deferredPwaPrompt = null;
+          setIsAppInstalled(true);
           setInstalledSuccess(true);
           setIsInstallModalOpen(false);
           return true;
@@ -55,7 +78,6 @@ export const Header: React.FC = () => {
   const handleInstallClick = async () => {
     const installed = await triggerDirectInstall();
     if (!installed) {
-      // If direct prompt not available, open the modal with direct action button & guide
       setIsInstallModalOpen(true);
     }
   };
@@ -83,17 +105,19 @@ export const Header: React.FC = () => {
 
         {/* Action Controls & Admin Session */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* ALWAYS VISIBLE Download / Install App Button */}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleInstallClick}
-            icon={<Download className="w-4 h-4 text-white" />}
-            className="bg-brass-500 hover:bg-brass-600 text-white font-bold shadow-sm animate-pulse hover:animate-none"
-            title="Download App on Device"
-          >
-            <span>Download App</span>
-          </Button>
+          {/* Download App Button - HIDDEN IN INSTALLED APP, VISIBLE ONLY ON WEBSITE */}
+          {!isAppInstalled && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleInstallClick}
+              icon={<Download className="w-4 h-4 text-white" />}
+              className="bg-brass-500 hover:bg-brass-600 text-white font-bold shadow-sm animate-pulse hover:animate-none"
+              title="Download App on Device"
+            >
+              <span>Download App</span>
+            </Button>
+          )}
 
           {/* Light / Dark Mode Toggle Button */}
           <button
