@@ -46,7 +46,7 @@ app.use(morgan('dev'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Shivam Enterprises REST API Service Online' });
+  res.status(200).json({ status: 'ok', message: 'Shivam Enterprises REST API Service Online' });
 });
 
 // API Routes

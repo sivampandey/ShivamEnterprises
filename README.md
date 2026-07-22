@@ -1,43 +1,94 @@
 # Shivam Enterprises — Labour Attendance & Wage Ledger System
 
-A professional, full-stack labour attendance and wage ledger web application built for **Shivam Enterprises** (single shop admin).
+A complete full-stack web application for **Shivam Enterprises**, a labour attendance and wage ledger system for a single shop admin.
 
-Designed with a modern ledger paper aesthetic, rubber ink stamp attendance controls, tabular currency tracking in Indian Rupees (₹), mobile-first responsive layouts, running balance calculations, and downloadable monthly CSV reports.
-
----
-
-## 📲 How to Download & Install as an App on Your Device
-
-**Shivam Enterprises** is built as a Progressive Web App (PWA). You can install it directly onto your phone's home screen or laptop desktop without going through an app store!
-
-### 📱 On Android (Google Chrome)
-1. Open the app in **Chrome** browser on your Android phone.
-2. Tap the **"Install App"** button in the top header, OR tap the **⋮ (three dots menu)** in the top right corner.
-3. Select **"Install App"** or **"Add to Home Screen"**.
-4. Tap **Install**. The **Shivam Ledger** app icon will appear on your phone home screen and app drawer!
-
-### 🍎 On iPhone / iPad (Apple Safari)
-1. Open the app in **Safari** browser on your iPhone or iPad.
-2. Tap the **Share** button (the square icon with an upward arrow at the bottom).
-3. Scroll down and tap **"Add to Home Screen"**.
-4. Tap **Add** in the top right corner. The **Shivam Ledger** app icon will appear on your iPhone home screen!
-
-### 💻 On Windows PC / Mac (Google Chrome or Microsoft Edge)
-1. Open the app URL in **Chrome** or **Microsoft Edge**.
-2. Click the **"Install App"** button in the header bar, or click the **Install icon (small monitor with down arrow)** in the address bar.
-3. Click **Install**. The app will launch in a standalone window and add a shortcut to your Desktop and Start Menu!
+Designed with a paper ledger aesthetic, rubber ink stamp attendance controls, tabular currency tracking in Indian Rupees (₹), mobile-first responsive layouts, running balance calculations, downloadable monthly CSV reports, and automatic server health monitoring.
 
 ---
 
-## 🌟 Key Features
+## 📁 Project Structure
 
-- **🔐 Admin Authentication**: Secure login with JWT tokens delivered via `httpOnly`, `sameSite`, `secure` cookies with bcrypt password hashing and session validation.
-- **📅 Today's Attendance Register**: Date-picker register with interactive ink stamp buttons (**Present** / **Half Day** / **Absent**), cash advance tracking, and live daily wage earned calculations.
-- **👥 Labourers Roster & Directory**: Manage shop workers, daily wage rates, inline wage editing, active/inactive toggles, Add Labourer modal, and confirmation dialogs for destructive actions.
-- **📖 Individual Labourer Ledgers**: Comprehensive worker history timeline, running balance statistics, attendance totals, and cash settlement payout recording.
-- **📊 Monthly Reports & CSV Export**: Summary dashboard for monthly wages paid, advances issued, net balances owed, sortable worker tallies, and instant CSV file downloads.
-- **🎨 Ledger Aesthetics & Dark Mode**: Modern paper-and-ink visual theme (`#FAF6EC` / `#26221A` / `#B9812E`) with a light/dark mode toggle.
-- **📱 Responsive & Mobile-Friendly**: Adapts smoothly from desktop tabular views to touch-friendly single-column mobile web cards with bottom navigation.
+```
+/Shivam-Enterprises
+  /server        (Node.js + Express + MongoDB REST API)
+  /src           (React + Vite + Tailwind CSS Frontend)
+  package.json   (root — runs both frontend & backend concurrently)
+  .env.example   (frontend environment template)
+  /server/.env.example (backend environment template)
+  README.md
+```
+
+---
+
+## ⚡ Quick Start (Single Command)
+
+### 1. Initial Setup
+
+```bash
+# 1. Install root & frontend dependencies
+npm install
+
+# 2. Install backend dependencies
+cd server && npm install && cd ..
+
+# 3. Create local environment files
+cp .env.example .env
+cp server/.env.example server/.env
+```
+
+### 2. Seed Database
+
+```bash
+# Create default admin user (admin / admin123) and sample labourers
+npm run seed
+```
+
+### 3. Launch Application (Backend + Frontend)
+
+```bash
+# Runs backend (port 5000) and frontend (Vite) concurrently with one command
+npm run dev
+```
+
+---
+
+## 🧪 Verify It Works
+
+1. Open your browser and navigate to **`http://localhost:3000`** (or `http://localhost:5173`).
+2. **Health Check Verification**: On page load, the frontend pings `/api/health`. The server health status passes cleanly without any warning banners.
+3. **Login Verification**:
+   - **Username**: `admin`
+   - **Password**: `admin123`
+4. Click **Sign In to Register**. On successful login, you will land on the **Dashboard**, pre-populated with sample labourers and attendance controls!
+
+---
+
+## ⚙️ Environment Variables & Deployment
+
+Moving from local development to production requires **only changing values in `.env` files — no code changes.**
+
+### **Backend Environment (`/server/.env`)**
+
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/shivam_attendance
+JWT_SECRET=shivam_enterprises_super_secret_jwt_key_2026
+JWT_EXPIRES_IN=7d
+CORS_ORIGIN=http://localhost:3000
+COOKIE_DOMAIN=localhost
+NODE_ENV=development
+```
+
+### **Frontend Environment (`/.env`)**
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+### **When Deploying to Production:**
+- **Backend `.env`**: Change `MONGODB_URI` to your production MongoDB Atlas cluster URL, `CORS_ORIGIN` to your deployed frontend domain (e.g. `https://shivam-enterprises.vercel.app`), `COOKIE_DOMAIN` to your domain, `NODE_ENV=production`, and set a strong `JWT_SECRET`.
+- **Frontend `.env`**: Change `VITE_API_BASE_URL` to your deployed backend URL (e.g. `https://shivam-enterprises-backend.onrender.com/api`).
+- **Nothing else needs editing.** All URLs, ports, and origins are consumed exclusively from these two environment files.
 
 ---
 
@@ -45,54 +96,18 @@ Designed with a modern ledger paper aesthetic, rubber ink stamp attendance contr
 
 ### **Frontend (`src/`)**
 - **Core**: React 18 + Vite + TypeScript
-- **PWA**: Web App Manifest (`manifest.json`), Service Worker (`sw.js`), Standalone Display
+- **PWA**: Web App Manifest (`manifest.json`), Standalone Display
 - **Routing**: React Router v6
-- **Styling**: Tailwind CSS + Custom CSS (Ink stamp animations, tabular numerals)
-- **HTTP Client**: Axios (with JWT header interceptor & 401 login auto-redirect)
-- **State Management**: React Context (`AuthContext`, `ThemeContext`) & Local Storage Fallback
-- **Icons**: Lucide React
+- **Styling**: Tailwind CSS + Custom CSS (Ink stamp animations, paper ledger theme `#FAF6EC` / `#26221A` / `#B9812E`)
+- **HTTP Client**: Axios with `withCredentials: true` and authorization token headers
+- **State Management**: React Context (`AuthContext`, `ThemeContext`) & Server Health Monitor (`ServerHealthBanner`)
 
 ### **Backend (`server/`)**
 - **Core**: Node.js + Express
-- **Database**: MongoDB + Mongoose Schema Models
+- **Database**: MongoDB + Mongoose Schema Models (`Admin`, `Labourer`, `AttendanceRecord`, `Settlement`)
 - **Security & Auth**: JWT (`jsonwebtoken`), `bcryptjs`, `cookie-parser`, `helmet`, `cors`, `express-rate-limit`
 - **Validation**: `zod` schema validation
-- **Logging**: `morgan`
-
----
-
-## 🚀 Getting Started
-
-### 1. Prerequisites
-- **Node.js**: v18.x or higher
-- **npm**: v9.x or higher
-- **MongoDB**: Running locally on `mongodb://127.0.0.1:27017`
-
-### 2. Frontend Setup & Launch
-```bash
-# 1. Install frontend dependencies
-npm install
-
-# 2. Start Vite development server
-npm run dev
-```
-The web application will open at **`http://localhost:3000`**.
-
-### 3. Backend Setup & Launch
-```bash
-# 1. Navigate to server directory
-cd server
-
-# 2. Install backend dependencies
-npm install
-
-# 3. Seed default admin credentials and sample workers
-npm run seed
-
-# 4. Start backend server in development mode
-npm run dev
-```
-The REST API server will run at **`http://localhost:5000`**.
+- **CSV Export**: Native CSV report generation (`GET /api/reports/summary.csv`)
 
 ---
 
@@ -103,7 +118,7 @@ The REST API server will run at **`http://localhost:5000`**.
 
 ---
 
-## 📐 Server Business Rules & Balance Calculation
+## 📐 Business Rules & Ledger Calculations
 
 1. **Daily Wage Earned**:
    - `PRESENT`: $100\%$ of worker's daily wage
@@ -111,10 +126,10 @@ The REST API server will run at **`http://localhost:5000`**.
    - `ABSENT`: ₹0
 
 2. **Net Running Balance Formula**:
-   $$\text{Running Balance Owed} = \sum \text{Earned Wages} - \sum \text{Cash Advances Taken} - \sum \text{Settlements Paid}$$
+   $$\text{Balance Owed} = \sum \text{Earned Wages} - \sum \text{Cash Advances Taken} - \sum \text{Settlements Paid}$$
 
 ---
 
 ## 📄 License
 
-This project is created for **Shivam Enterprises**. All rights reserved.
+Created for **Shivam Enterprises**. All rights reserved.

@@ -5,6 +5,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { MainLayout } from './components/layout/MainLayout';
 
+import { ServerHealthBanner } from './components/common/ServerHealthBanner';
+
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LabourersPage } from './pages/LabourersPage';
@@ -16,6 +18,7 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ServerHealthBanner />
           <Routes>
             {/* Public Login Route */}
             <Route path="/login" element={<LoginPage />} />

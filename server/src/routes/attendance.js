@@ -10,6 +10,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/', getAttendanceByDate);
+router.post('/', upsertAttendance);
 router.put('/:labourerId/:date', upsertAttendance);
 
 export default router;
