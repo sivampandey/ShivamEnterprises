@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Sun, Moon, LogOut, Store, UserCheck, Download } from 'lucide-react';
+import { Sun, Moon, LogOut, Store, UserCheck, Download, Smartphone, Laptop, Share2, PlusSquare } from 'lucide-react';
 import { Button } from '../common/Button';
+import { Modal } from '../common/Modal';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -22,12 +24,20 @@ export const Header: React.FC = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+          return;
+        }
+      } catch (err) {
+        // Fallback to instruction modal
+      }
     }
+    // Show instruction modal if prompt not available or on iOS/Safari
+    setIsInstallModalOpen(true);
   };
 
   return (
@@ -53,18 +63,17 @@ export const Header: React.FC = () => {
 
         {/* Action Controls & Admin Session */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* PWA Install App Button */}
-          {deferredPrompt && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleInstallClick}
-              icon={<Download className="w-4 h-4 text-brass-600 dark:text-brass-400" />}
-              className="hidden xs:inline-flex"
-            >
-              <span>Install App</span>
-            </Button>
-          )}
+          {/* ALWAYS VISIBLE Download / Install App Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleInstallClick}
+            icon={<Download className="w-4 h-4 text-brass-600 dark:text-brass-400" />}
+            className="border-brass-400 dark:border-brass-700 text-brass-800 dark:text-brass-300 hover:bg-brass-50 dark:hover:bg-brass-900/40"
+            title="Download App on Device"
+          >
+            <span className="font-semibold">Download App</span>
+          </Button>
 
           {/* Light / Dark Mode Toggle Button */}
           <button
@@ -103,6 +112,59 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Download & Install App Guide Modal */}
+      <Modal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        title="Download App on Your Device"
+        subtitle="Install Shivam Ledger directly on your phone or laptop"
+      >
+        <div className="space-y-4 text-sm text-ink dark:text-gray-200">
+          {/* Android Section */}
+          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
+              <Smartphone className="w-4 h-4 shrink-0" />
+              <span>Android Mobile / Tablet (Chrome)</span>
+            </div>
+            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+              1. Tap Chrome top menu <strong>⋮ (3 dots)</strong>.<br />
+              2. Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.<br />
+              3. App icon will appear on your phone home screen!
+            </p>
+          </div>
+
+          {/* iPhone Section */}
+          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span>iPhone / iPad (Safari)</span>
+            </div>
+            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+              1. Tap Safari bottom <strong>Share button</strong> (Square with arrow).<br />
+              2. Tap <strong>"Add to Home Screen"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-brass-600" />.<br />
+              3. Tap <strong>Add</strong> in the top right corner.
+            </p>
+          </div>
+
+          {/* Desktop Section */}
+          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
+              <Laptop className="w-4 h-4 shrink-0" />
+              <span>Windows PC / Mac (Chrome or Edge)</span>
+            </div>
+            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+              Click the <strong>Install icon</strong> in your browser address bar (top right) or menu to install as a desktop app.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button size="sm" onClick={() => setIsInstallModalOpen(false)}>
+              Got it
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 };
