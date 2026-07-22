@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { AttendanceStatus } from '../../api/types';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 

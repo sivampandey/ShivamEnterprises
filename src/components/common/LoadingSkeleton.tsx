@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 export const TableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
   return (

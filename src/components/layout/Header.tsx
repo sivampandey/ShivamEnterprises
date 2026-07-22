@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon, LogOut, Store, UserCheck, Download, Smartphone, Laptop, Share2, PlusSquare } from 'lucide-react';

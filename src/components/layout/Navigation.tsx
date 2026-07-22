@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { NavLink } from 'react-router-dom';
 import { CalendarCheck, Users, BarChart3 } from 'lucide-react';
 

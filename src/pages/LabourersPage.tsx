@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { labourerApi } from '../api/labourerApi';
 import { Labourer } from '../api/types';

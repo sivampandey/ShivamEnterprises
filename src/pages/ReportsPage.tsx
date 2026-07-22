@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsApi } from '../api/reportsApi';
 import { MonthlyReportSummary } from '../api/types';
