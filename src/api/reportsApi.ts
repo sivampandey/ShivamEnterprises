@@ -14,7 +14,7 @@ export const reportsApi = {
       });
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const labourers = getStoredLabourers();

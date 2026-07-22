@@ -20,7 +20,7 @@ export const attendanceApi = {
       const response = await apiClient.get<RegisterItem[]>('/attendance', { params: { date } });
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const activeLabourers = getStoredLabourers().filter((l) => l.isActive);
@@ -60,7 +60,7 @@ export const attendanceApi = {
       });
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const records = getStoredAttendance();

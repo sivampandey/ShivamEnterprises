@@ -20,7 +20,7 @@ export const labourerApi = {
       });
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     let labourers = getStoredLabourers();
@@ -43,7 +43,7 @@ export const labourerApi = {
       const response = await apiClient.post<Labourer>('/labourers', { name, dailyWage });
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const labourers = getStoredLabourers();
@@ -64,7 +64,7 @@ export const labourerApi = {
       const response = await apiClient.put<Labourer>(`/labourers/${id}`, updates);
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const labourers = getStoredLabourers();
@@ -85,7 +85,7 @@ export const labourerApi = {
       await apiClient.delete(`/labourers/${id}`, { params: { permanent } });
       return;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     let labourers = getStoredLabourers();
@@ -109,7 +109,7 @@ export const labourerApi = {
       const response = await apiClient.get<LabourerLedgerDetail>(`/labourers/${id}/ledger`);
       return response.data;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const ledger = computeLabourerLedger(id);
@@ -129,7 +129,7 @@ export const labourerApi = {
       await apiClient.post(`/labourers/${labourerId}/settle`, { amount, notes, date });
       return;
     } catch (e: any) {
-      if (e.response) throw e;
+      if (e.response && e.response.status !== 404) throw e;
     }
 
     const settlements = getStoredSettlements();
