@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FC } from 'react';
+import { useState, useEffect, useCallback, FC, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { attendanceApi, RegisterItem } from '../api/attendanceApi';
 import { AttendanceStatus } from '../api/types';
@@ -120,7 +120,7 @@ export const DashboardPage: FC = () => {
             type="date"
             max={todayISO}
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSelectedDate(e.target.value)}
             className="bg-transparent text-sm font-semibold text-ink dark:text-gray-100 focus:outline-none cursor-pointer"
           />
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-brass-100 dark:bg-brass-900/40 text-brass-800 dark:text-brass-300 font-bold">
@@ -233,7 +233,7 @@ export const DashboardPage: FC = () => {
                           min="0"
                           step="50"
                           value={item.advanceTaken || ''}
-                          onChange={(e) =>
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
                             handleAdvanceChange(item.labourer.id, parseFloat(e.target.value))
                           }
                           className="w-24 text-right font-tabular px-2.5 py-1 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark focus:ring-2 focus:ring-brass-500 focus:outline-none"
@@ -290,7 +290,7 @@ export const DashboardPage: FC = () => {
                         min="0"
                         step="50"
                         value={item.advanceTaken || ''}
-                        onChange={(e) =>
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
                           handleAdvanceChange(item.labourer.id, parseFloat(e.target.value))
                         }
                         className="w-24 text-right font-tabular px-2 py-1 rounded border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark focus:ring-2 focus:ring-brass-500"

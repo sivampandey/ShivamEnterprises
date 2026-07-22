@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FC, useMemo } from 'react';
+import { useState, useEffect, useCallback, FC, useMemo, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsApi } from '../api/reportsApi';
 import { MonthlyReportSummary } from '../api/types';
@@ -88,7 +88,7 @@ export const ReportsPage: FC = () => {
             <input
               type="month"
               value={month}
-              onChange={(e) => setMonth(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setMonth(e.target.value)}
               className="bg-transparent text-sm font-semibold text-ink dark:text-gray-100 focus:outline-none cursor-pointer"
             />
           </div>

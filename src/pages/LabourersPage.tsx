@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FC } from 'react';
+import { useState, useEffect, useCallback, FC, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { labourerApi } from '../api/labourerApi';
 import { Labourer } from '../api/types';
@@ -162,7 +162,7 @@ export const LabourersPage: FC = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             placeholder="Search by labourer name..."
             className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:outline-none"
           />
@@ -173,7 +173,7 @@ export const LabourersPage: FC = () => {
           <input
             type="checkbox"
             checked={includeInactive}
-            onChange={(e) => setIncludeInactive(e.target.checked)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setIncludeInactive(e.target.checked)}
             className="w-4 h-4 rounded text-brass-500 focus:ring-brass-500 border-paper-border dark:border-gray-700 bg-paper-light dark:bg-paper-dark"
           />
           {includeInactive ? <Eye className="w-4 h-4 text-brass-500" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
@@ -232,7 +232,7 @@ export const LabourersPage: FC = () => {
                           <input
                             type="number"
                             value={editingWageVal}
-                            onChange={(e) => setEditingWageVal(e.target.value)}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingWageVal(e.target.value)}
                             className="w-20 px-2 py-1 text-right text-xs rounded border border-brass-500 focus:outline-none bg-paper-light dark:bg-paper-dark"
                             autoFocus
                           />
@@ -411,7 +411,7 @@ export const LabourersPage: FC = () => {
               type="text"
               required
               value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)}
               placeholder="e.g. Rajesh Sharma"
               className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:outline-none"
             />
@@ -431,7 +431,7 @@ export const LabourersPage: FC = () => {
                 min="100"
                 step="50"
                 value={newWage}
-                onChange={(e) => setNewWage(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setNewWage(e.target.value)}
                 placeholder="650"
                 className="w-full pl-8 pr-3 py-2 text-sm font-tabular rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:outline-none"
               />

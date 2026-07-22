@@ -1,4 +1,4 @@
-import { useState, FC, FormEvent } from 'react';
+import { useState, FC, FormEvent, ChangeEvent } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -22,21 +22,16 @@ export const LoginPage: FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password.');
-      return;
-    }
-
-    setError(null);
     setIsLoading(true);
+    setError(null);
 
     try {
       await login(username, password, rememberMe);
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Invalid username or password.';
+      const msg = err instanceof Error ? err.message : 'Login failed. Please check credentials.';
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -44,50 +39,51 @@ export const LoginPage: FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-paper-light dark:bg-paper-dark transition-colors relative overflow-hidden">
-      {/* Background Decorative Ledger Lines */}
-      <div className="absolute inset-0 bg-[radial-gradient(#B9812E_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
+    <div className="min-h-screen bg-paper-light dark:bg-paper-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors relative overflow-hidden">
+      {/* Top Background Decoration Accent */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-b from-brass-500/10 to-transparent pointer-events-none" />
 
-      {/* Top Bar with Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Theme Toggle Button Top Right */}
+      <div className="absolute top-4 right-4 z-20">
         <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-full bg-paper-card dark:bg-paper-darkCard border border-paper-border dark:border-paper-darkBorder text-ink dark:text-gray-200 shadow-sm hover:scale-105 transition-all"
+          className="p-2.5 rounded-xl bg-paper-card dark:bg-paper-darkCard border border-paper-border dark:border-paper-darkBorder text-ink dark:text-gray-200 shadow-sm hover:scale-105 active:scale-95 transition-all"
           title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
         >
           {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-amber-400" />}
         </button>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 px-4">
-        {/* Shop Logo & Title */}
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-brass-500 flex items-center justify-center text-white shadow-xl shadow-brass-500/25 ring-4 ring-brass-500/20 mb-4">
-            <Store className="w-8 h-8" />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-brass-500 flex items-center justify-center text-white shadow-lg shadow-brass-500/30 ring-4 ring-brass-500/20">
+            <Store className="w-7 h-7" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-ink dark:text-gray-100">
-            Shivam Enterprises
-          </h2>
-          <p className="mt-1 text-sm text-ink-light dark:text-gray-400 font-medium">
-            Labour Attendance & Wage Ledger Portal
-          </p>
         </div>
 
-        {/* Login Card */}
-        <div className="mt-8 bg-paper-card dark:bg-paper-darkCard py-8 px-6 sm:px-10 rounded-2xl border border-paper-border dark:border-paper-darkBorder shadow-ledger">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-medium text-status-absent dark:text-rose-300">
-                {error}
-              </div>
-            )}
+        <h2 className="mt-4 text-center text-2xl font-serif font-bold text-ink dark:text-gray-100">
+          Shivam Enterprises
+        </h2>
+        <p className="mt-1 text-center text-xs font-mono uppercase tracking-widest text-brass-700 dark:text-brass-400 font-semibold">
+          Shop Admin Labour Attendance Ledger
+        </p>
+      </div>
 
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
+        <div className="bg-paper-card dark:bg-paper-darkCard py-8 px-6 sm:px-10 rounded-2xl border border-paper-border dark:border-paper-darkBorder shadow-ledger space-y-6">
+          {error && (
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-status-absent flex items-start gap-2.5">
+              <span className="font-semibold">{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
                 htmlFor="username"
                 className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1.5"
               >
-                Username or Email
+                Username
               </label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -99,7 +95,7 @@ export const LoginPage: FC = () => {
                   type="text"
                   required
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500 transition-colors"
                   placeholder="admin"
                 />
@@ -123,7 +119,7 @@ export const LoginPage: FC = () => {
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500 transition-colors"
                   placeholder="••••••••"
                 />
@@ -135,7 +131,7 @@ export const LoginPage: FC = () => {
                 <input
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded text-brass-500 focus:ring-brass-500 border-paper-border dark:border-gray-700 bg-paper-light dark:bg-paper-dark"
                 />
                 <span>Remember me</span>
