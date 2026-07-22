@@ -25,14 +25,22 @@ export const authApi = {
         },
       };
     } catch (e: any) {
+      let errorMessage = 'Invalid username or password.';
+
+      if (e.response && e.response.data && typeof e.response.data === 'object') {
+        if (e.response.data.error?.message && typeof e.response.data.error.message === 'string') {
+          errorMessage = e.response.data.error.message;
+        } else if (
+          e.response.data.message &&
+          typeof e.response.data.message === 'string' &&
+          !e.response.data.message.toLowerCase().includes('could not be found')
+        ) {
+          errorMessage = e.response.data.message;
+        }
+      }
+
       // 1. If backend server explicitly responded with 401 or 400 validation error
       if (e.response && (e.response.status === 401 || e.response.status === 400)) {
-        const errorMessage =
-          e.response.data?.error?.message ||
-          (typeof e.response.data?.message === 'string' && e.response.data.message !== 'The page could not be found'
-            ? e.response.data.message
-            : null) ||
-          'Invalid username or password.';
         throw new Error(errorMessage);
       }
 

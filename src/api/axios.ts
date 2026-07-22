@@ -51,16 +51,26 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle 401 Unauthorized globally
+// Response Interceptor: Handle 401 Unauthorized & Normalize Errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('shivam_jwt_token');
-      sessionStorage.removeItem('shivam_jwt_token');
-      // Redirect to login page if unauthenticated
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+    if (error.response) {
+      if (error.response.status === 401) {
+        localStorage.removeItem('shivam_jwt_token');
+        sessionStorage.removeItem('shivam_jwt_token');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+
+      // Filter out raw Vercel HTML/JSON "The page could not be found" messages
+      if (
+        error.response.data &&
+        (error.response.data.message === 'The page could not be found' ||
+          typeof error.response.data === 'string' && error.response.data.includes('The page could not be found'))
+      ) {
+        error.message = 'Unable to connect to backend server. Please check server connection.';
       }
     }
     return Promise.reject(error);
