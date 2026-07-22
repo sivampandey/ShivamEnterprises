@@ -1,13 +1,28 @@
 {
+  "id": "shivam-enterprises-labour-ledger",
   "name": "Shivam Enterprises — Labour Ledger",
   "short_name": "Shivam Ledger",
   "description": "Labour attendance and wage ledger system for Shivam Enterprises shop admin.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FAF6EC",
   "theme_color": "#B9812E",
   "orientation": "portrait-primary",
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/pwa-192x192.svg",
       "sizes": "192x192",
