@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Sun, Moon, LogOut, Store, UserCheck, Download, Smartphone, Laptop, Share2, PlusSquare } from 'lucide-react';
+import { Sun, Moon, LogOut, Store, UserCheck, Download, Smartphone, Laptop, Share2, PlusSquare, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 
@@ -11,11 +11,19 @@ export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
+  const [installedSuccess, setInstalledSuccess] = useState<boolean>(false);
 
   useEffect(() => {
+    // Check if global prompt was captured before component mount
+    if ((window as unknown as Record<string, unknown>).deferredPwaPrompt) {
+      setDeferredPrompt((window as unknown as Record<string, unknown>).deferredPwaPrompt as BeforeInstallPromptEvent);
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const pwaEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(pwaEvent);
+      (window as unknown as Record<string, unknown>).deferredPwaPrompt = pwaEvent;
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
@@ -24,21 +32,32 @@ export const Header: React.FC = () => {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
+  const triggerDirectInstall = async () => {
+    const prompt = deferredPrompt || ((window as unknown as Record<string, unknown>).deferredPwaPrompt as BeforeInstallPromptEvent | null);
+    if (prompt) {
       try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        await prompt.prompt();
+        const { outcome } = await prompt.userChoice;
         if (outcome === 'accepted') {
           setDeferredPrompt(null);
-          return;
+          (window as unknown as Record<string, unknown>).deferredPwaPrompt = null;
+          setInstalledSuccess(true);
+          setIsInstallModalOpen(false);
+          return true;
         }
       } catch (err) {
-        // Fallback to instruction modal
+        console.error('Install prompt error:', err);
       }
     }
-    // Show instruction modal if prompt not available or on iOS/Safari
-    setIsInstallModalOpen(true);
+    return false;
+  };
+
+  const handleInstallClick = async () => {
+    const installed = await triggerDirectInstall();
+    if (!installed) {
+      // If direct prompt not available, open the modal with direct action button & guide
+      setIsInstallModalOpen(true);
+    }
   };
 
   return (
@@ -70,7 +89,7 @@ export const Header: React.FC = () => {
             size="sm"
             onClick={handleInstallClick}
             icon={<Download className="w-4 h-4 text-white" />}
-            className="bg-brass-500 hover:bg-brass-600 text-white font-bold shadow-sm"
+            className="bg-brass-500 hover:bg-brass-600 text-white font-bold shadow-sm animate-pulse hover:animate-none"
             title="Download App on Device"
           >
             <span>Download App</span>
@@ -114,54 +133,88 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Download & Install App Guide Modal */}
+      {/* Success Notification Banner */}
+      {installedSuccess && (
+        <div className="bg-emerald-600 text-white py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 shadow-inner">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>App installed successfully on your device home screen!</span>
+          <button onClick={() => setInstalledSuccess(false)} className="underline ml-4 text-white/80 hover:text-white">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Download & Install App Modal */}
       <Modal
         isOpen={isInstallModalOpen}
         onClose={() => setIsInstallModalOpen(false)}
-        title="Download App on Your Device"
-        subtitle="Install Shivam Ledger directly on your phone or laptop"
+        title="Install Shivam Ledger App"
+        subtitle="Install as a standalone application on phone or computer"
       >
         <div className="space-y-4 text-sm text-ink dark:text-gray-200">
-          {/* Android Section */}
-          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
-              <Smartphone className="w-4 h-4 shrink-0" />
-              <span>Android Mobile / Tablet (Chrome)</span>
+          {/* Primary Direct Action Button inside Modal */}
+          <div className="p-4 rounded-xl bg-brass-50 dark:bg-brass-950/40 border border-brass-200 dark:border-brass-800 text-center space-y-3">
+            <div className="flex items-center justify-center gap-2 font-bold text-brass-800 dark:text-brass-300 text-base">
+              <Sparkles className="w-5 h-5 text-brass-500" />
+              <span>Direct 1-Click Install</span>
             </div>
-            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
-              1. Tap Chrome top menu <strong>⋮ (3 dots)</strong>.<br />
-              2. Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.<br />
-              3. App icon will appear on your phone home screen!
+            <p className="text-xs text-ink-light dark:text-gray-300">
+              Click below to launch Chrome / Edge native installation prompt on your device.
             </p>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={triggerDirectInstall}
+              icon={<Download className="w-4 h-4" />}
+              className="w-full bg-brass-500 hover:bg-brass-600 text-white font-bold py-3 shadow-md"
+            >
+              Install App Directly Now
+            </Button>
           </div>
 
-          {/* iPhone Section */}
-          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
-              <Share2 className="w-4 h-4 shrink-0" />
-              <span>iPhone / iPad (Safari)</span>
-            </div>
-            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
-              1. Tap Safari bottom <strong>Share button</strong> (Square with arrow).<br />
-              2. Tap <strong>"Add to Home Screen"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-brass-600" />.<br />
-              3. Tap <strong>Add</strong> in the top right corner.
-            </p>
-          </div>
+          {/* Device Quick Guides */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-ink/70 dark:text-gray-400">
+              If Install Popup Does Not Appear Automatically:
+            </h4>
 
-          {/* Desktop Section */}
-          <div className="p-3.5 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-brass-700 dark:text-brass-400">
-              <Laptop className="w-4 h-4 shrink-0" />
-              <span>Windows PC / Mac (Chrome or Edge)</span>
+            {/* Android Section */}
+            <div className="p-3 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-brass-700 dark:text-brass-400 text-xs">
+                <Smartphone className="w-4 h-4 shrink-0" />
+                <span>Android Chrome / Brave / Edge</span>
+              </div>
+              <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+                Tap Chrome top <strong>⋮ (3 dots)</strong> &rarr; Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
+              </p>
             </div>
-            <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
-              Click the <strong>Install icon</strong> in your browser address bar (top right) or menu to install as a desktop app.
-            </p>
+
+            {/* iPhone Section */}
+            <div className="p-3 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-brass-700 dark:text-brass-400 text-xs">
+                <Share2 className="w-4 h-4 shrink-0" />
+                <span>iPhone / iPad (Safari)</span>
+              </div>
+              <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+                Tap Safari bottom <strong>Share button</strong> &rarr; Tap <strong>"Add to Home Screen"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-brass-600" /> &rarr; Tap <strong>Add</strong>.
+              </p>
+            </div>
+
+            {/* Desktop Section */}
+            <div className="p-3 rounded-xl bg-paper-light dark:bg-paper-dark border border-paper-border dark:border-paper-darkBorder space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-brass-700 dark:text-brass-400 text-xs">
+                <Laptop className="w-4 h-4 shrink-0" />
+                <span>Laptop / Desktop (Chrome, Edge, Brave)</span>
+              </div>
+              <p className="text-xs text-ink-light dark:text-gray-400 leading-relaxed pl-6">
+                Click the <strong>Install icon ⊕</strong> in your browser address bar top right.
+              </p>
+            </div>
           </div>
 
           <div className="pt-2 flex justify-end">
             <Button size="sm" onClick={() => setIsInstallModalOpen(false)}>
-              Got it
+              Close
             </Button>
           </div>
         </div>
