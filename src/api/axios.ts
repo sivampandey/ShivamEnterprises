@@ -3,16 +3,30 @@ import axios from 'axios';
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
 
-  if (!envUrl) {
-    return import.meta.env.DEV ? 'http://localhost:5000/api' : '/api';
+  if (envUrl && envUrl.trim()) {
+    let cleanUrl = envUrl.trim().replace(/\/+$/, '');
+    if (!cleanUrl.endsWith('/api')) {
+      cleanUrl = `${cleanUrl}/api`;
+    }
+    return cleanUrl;
   }
 
-  let cleanUrl = envUrl.trim().replace(/\/+$/, '');
-  if (!cleanUrl.endsWith('/api')) {
-    cleanUrl = `${cleanUrl}/api`;
+  // Dynamic host resolution for multi-device support (mobiles, tablets, LAN)
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    if (
+      import.meta.env.DEV ||
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.')
+    ) {
+      return `http://${hostname}:5000/api`;
+    }
   }
 
-  return cleanUrl;
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
