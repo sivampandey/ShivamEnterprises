@@ -2,7 +2,8 @@ import { useState, FC, FormEvent, ChangeEvent } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Store, Lock, User as UserIcon, Sun, Moon, ShieldCheck, KeyRound } from 'lucide-react';
+import { authApi } from '../api/authApi';
+import { Store, Lock, User as UserIcon, Sun, Moon, ShieldCheck, KeyRound, Key, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 
@@ -13,10 +14,18 @@ export const LoginPage: FC = () => {
 
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin123');
-  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Forgot / Reset Password Modal state
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [resetUsername, setResetUsername] = useState('admin');
+  const [secretPin, setSecretPin] = useState('SHIVAM2026');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetIsLoading, setResetIsLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -28,13 +37,54 @@ export const LoginPage: FC = () => {
     setError(null);
 
     try {
-      await login(username, password, rememberMe);
+      await login(username, password, true);
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed. Please check credentials.';
       setError(msg);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setResetError(null);
+    setResetSuccess(null);
+
+    if (!resetUsername.trim()) {
+      setResetError('Please enter username.');
+      return;
+    }
+    if (!secretPin.trim()) {
+      setResetError('Please enter secret key or current password.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 4) {
+      setResetError('New password must be at least 4 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetError('New password and confirmation do not match.');
+      return;
+    }
+
+    setResetIsLoading(true);
+    try {
+      const successMsg = await authApi.resetPassword(resetUsername, secretPin, newPassword);
+      setResetSuccess(successMsg);
+      setPassword(newPassword);
+      setTimeout(() => {
+        setIsForgotModalOpen(false);
+        setResetSuccess(null);
+        setNewPassword('');
+        setConfirmPassword('');
+      }, 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Password reset failed.';
+      setResetError(msg);
+    } finally {
+      setResetIsLoading(false);
     }
   };
 
@@ -103,12 +153,21 @@ export const LoginPage: FC = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1.5"
-              >
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  htmlFor="password"
+                  className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300"
+                >
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotModalOpen(true)}
+                  className="text-xs font-semibold text-brass-600 dark:text-brass-400 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <Lock className="w-4 h-4" />
@@ -126,26 +185,6 @@ export const LoginPage: FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-ink/80 dark:text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded text-brass-500 focus:ring-brass-500 border-paper-border dark:border-gray-700 bg-paper-light dark:bg-paper-dark"
-                />
-                <span>Remember me</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setIsForgotModalOpen(true)}
-                className="font-medium text-brass-600 dark:text-brass-400 hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-
             <Button
               type="submit"
               variant="primary"
@@ -158,39 +197,116 @@ export const LoginPage: FC = () => {
             </Button>
           </form>
 
-          {/* Quick Demo Credentials Assistant */}
+          {/* Admin Credentials Note */}
           <div className="mt-6 pt-6 border-t border-paper-border dark:border-paper-darkBorder text-center">
             <p className="text-xs text-ink-light dark:text-gray-400">
-              Demo Admin Access Credentials:
+              Default Admin Login:
             </p>
             <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brass-50 dark:bg-brass-900/30 border border-brass-200 dark:border-brass-800 text-xs font-mono text-brass-800 dark:text-brass-300">
               <KeyRound className="w-3.5 h-3.5 shrink-0" />
-              <span>admin / admin123</span>
+              <span>admin / {password || 'admin123'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Forgot Password Stub Modal */}
+      {/* Fully Functional Password Reset Modal */}
       <Modal
         isOpen={isForgotModalOpen}
         onClose={() => setIsForgotModalOpen(false)}
-        title="Reset Password"
-        subtitle="Admin password recovery"
+        title="Update Admin Password"
+        subtitle="Reset or update your Shivam Enterprises login password"
       >
-        <div className="space-y-4 text-sm text-ink/80 dark:text-gray-300">
-          <p>
-            Please contact the system administrator or check your shop configuration file to reset your security credentials.
-          </p>
-          <div className="p-3 bg-brass-50 dark:bg-brass-900/30 rounded-lg text-xs font-mono text-brass-800 dark:text-brass-300">
-            Support Hotline: +91 98765 43210 (Shivam Enterprises)
+        <form onSubmit={handleResetPasswordSubmit} className="space-y-4 text-sm text-ink dark:text-gray-200">
+          {resetError && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-status-absent font-medium">
+              {resetError}
+            </div>
+          )}
+
+          {resetSuccess && (
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{resetSuccess}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              required
+              value={resetUsername}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setResetUsername(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500"
+              placeholder="admin"
+            />
           </div>
-          <div className="mt-4 flex justify-end">
-            <Button size="sm" onClick={() => setIsForgotModalOpen(false)}>
-              Got it
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
+              Master Secret Key / Current Password
+            </label>
+            <input
+              type="password"
+              required
+              value={secretPin}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSecretPin(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500"
+              placeholder="SHIVAM2026 or current password"
+            />
+            <p className="text-[11px] text-ink-light dark:text-gray-400 mt-1">
+              Default Secret Key: <span className="font-mono text-brass-700 dark:text-brass-400 font-bold">SHIVAM2026</span>
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={4}
+              value={newPassword}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500"
+              placeholder="Enter new password (min 4 chars)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={4}
+              value={confirmPassword}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500 focus:border-brass-500"
+              placeholder="Re-enter new password"
+            />
+          </div>
+
+          <div className="pt-3 flex items-center justify-end gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsForgotModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              isLoading={resetIsLoading}
+              icon={<Key className="w-4 h-4" />}
+            >
+              Update Password
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

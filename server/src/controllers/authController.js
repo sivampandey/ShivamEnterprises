@@ -8,6 +8,12 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const resetPasswordSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  secretPin: z.string().min(1, 'Secret key or current password is required'),
+  newPassword: z.string().min(4, 'New password must be at least 4 characters long'),
+});
+
 const getCookieOptions = () => {
   const isProd = process.env.NODE_ENV === 'production';
   return {
@@ -82,6 +88,59 @@ export const login = async (req, res, next) => {
         role: 'ADMIN',
       },
       token, // Return token for compatibility if client stores JWT
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const parseResult = resetPasswordSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: {
+          message: parseResult.error.errors[0].message,
+          code: 'VALIDATION_ERROR',
+        },
+      });
+    }
+
+    const { username, secretPin, newPassword } = parseResult.data;
+    const cleanUsername = username.trim().toLowerCase();
+
+    let admin = await Admin.findOne({ username: cleanUsername });
+
+    if (!admin) {
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(newPassword, salt);
+      admin = await Admin.create({ username: cleanUsername, passwordHash });
+      return res.status(200).json({
+        success: true,
+        message: 'Password created and updated successfully!',
+      });
+    }
+
+    // Verify secretPin: master key SHIVAM2026 or admin123 or current password match
+    const isMasterKey = secretPin === 'SHIVAM2026' || secretPin === 'admin123' || secretPin === 'SHIVAM';
+    const isCurrentPassword = await bcrypt.compare(secretPin, admin.passwordHash);
+
+    if (!isMasterKey && !isCurrentPassword) {
+      return res.status(400).json({
+        error: {
+          message: 'Invalid Secret Key or Current Password. Use secret pin "SHIVAM2026" or current password.',
+          code: 'INVALID_SECRET_KEY',
+        },
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    admin.passwordHash = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password updated successfully! You can now login with your new password.',
     });
   } catch (error) {
     next(error);
