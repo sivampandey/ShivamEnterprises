@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { labourerApi } from '../api/labourerApi';
 import { LabourerLedgerDetail, LedgerEntry } from '../api/types';
-import { formatCurrency, formatDateDisplay, getTodayISO } from '../utils/formatters';
+import { formatCurrency, formatDateDisplay, getTodayISO, getCurrentMonthISO, formatMonthDisplay } from '../utils/formatters';
+import { exportLabourerLedgerPDF } from '../utils/exportPdf';
 import { StatCard } from '../components/common/StatCard';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
@@ -16,8 +17,9 @@ import {
   Clock,
   XCircle,
   IndianRupee,
-  Receipt,
+  FileText,
   History,
+  CheckCheck,
 } from 'lucide-react';
 
 export const LedgerPage: React.FC = () => {
@@ -28,11 +30,12 @@ export const LedgerPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Settlement Modal State
+  // Complete Month Salary Modal State
   const [isSettleModalOpen, setIsSettleModalOpen] = useState<boolean>(false);
   const [settleAmount, setSettleAmount] = useState<string>('');
   const [settleDate, setSettleDate] = useState<string>(getTodayISO());
-  const [settleNotes, setSettleNotes] = useState<string>('Cash settlement payment');
+  const [settleMonth, setSettleMonth] = useState<string>(getCurrentMonthISO());
+  const [settleNotes, setSettleNotes] = useState<string>(`Full Salary Payout for ${formatMonthDisplay(getCurrentMonthISO())}`);
   const [isSubmittingSettle, setIsSubmittingSettle] = useState<boolean>(false);
 
   const fetchLedger = useCallback(async () => {
@@ -57,6 +60,26 @@ export const LedgerPage: React.FC = () => {
     fetchLedger();
   }, [fetchLedger]);
 
+  // Recalculate monthly earned amount when month changes in modal
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedM = e.target.value;
+    setSettleMonth(selectedM);
+    setSettleNotes(`Full Salary Payout for ${formatMonthDisplay(selectedM)}`);
+
+    if (ledgerDetail) {
+      // Calculate earnings for the selected month
+      const monthlyEntries = ledgerDetail.entries.filter(entry => entry.date.startsWith(selectedM) && entry.type === 'ATTENDANCE');
+      const monthlyEarned = monthlyEntries.reduce((acc, entry) => acc + entry.earnedAmount - entry.advanceTaken, 0);
+      
+      // If monthly earnings exist for this month, pre-fill with monthly earnings; otherwise use overall balance
+      if (monthlyEarned > 0) {
+        setSettleAmount(String(monthlyEarned));
+      } else {
+        setSettleAmount(String(ledgerDetail.stats.balanceOwed));
+      }
+    }
+  };
+
   const handleSettlementSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !settleAmount || isNaN(Number(settleAmount)) || Number(settleAmount) <= 0) {
@@ -68,11 +91,17 @@ export const LedgerPage: React.FC = () => {
       await labourerApi.settleBalance(id, Number(settleAmount), settleNotes, settleDate);
       setIsSettleModalOpen(false);
       fetchLedger();
-    } catch (err: any) {
-      setError(err.message || 'Failed to record payment settlement.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to record salary payout.';
+      setError(msg);
     } finally {
       setIsSubmittingSettle(false);
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!ledgerDetail) return;
+    exportLabourerLedgerPDF(ledgerDetail.labourer, ledgerDetail.stats, ledgerDetail.entries);
   };
 
   if (isLoading) return <TableSkeleton rows={8} />;
@@ -83,7 +112,7 @@ export const LedgerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Breadcrumb & Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
           onClick={() => navigate('/labourers')}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-light dark:text-gray-400 hover:text-ink dark:hover:text-gray-100 transition-colors"
@@ -92,13 +121,24 @@ export const LedgerPage: React.FC = () => {
           <span>Back to Labourers Directory</span>
         </button>
 
-        <Button
-          onClick={() => setIsSettleModalOpen(true)}
-          icon={<Receipt className="w-4 h-4" />}
-          disabled={stats.balanceOwed <= 0}
-        >
-          Mark as Settled / Paid
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleDownloadPDF}
+            variant="outline"
+            icon={<FileText className="w-4 h-4" />}
+          >
+            Download PDF Ledger
+          </Button>
+
+          {/* Complete Month Salary Action Button */}
+          <Button
+            onClick={() => setIsSettleModalOpen(true)}
+            icon={<CheckCheck className="w-4 h-4 text-emerald-100" />}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-800"
+          >
+            Complete Month Salary
+          </Button>
+        </div>
       </div>
 
       {/* Labourer Profile Header Card */}
@@ -198,7 +238,7 @@ export const LedgerPage: React.FC = () => {
                   <th className="py-3 px-4">Entry Type / Status</th>
                   <th className="py-3 px-4 text-right">Earned (₹)</th>
                   <th className="py-3 px-4 text-right">Advance (₹)</th>
-                  <th className="py-3 px-4 text-right">Settled Payment (₹)</th>
+                  <th className="py-3 px-4 text-right">Salary Disbursed (₹)</th>
                   <th className="py-3 px-6 text-right">Running Balance (₹)</th>
                 </tr>
               </thead>
@@ -216,9 +256,9 @@ export const LedgerPage: React.FC = () => {
 
                     <td className="py-3.5 px-4">
                       {entry.type === 'SETTLEMENT' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-status-present border border-emerald-300">
-                          <Receipt className="w-3.5 h-3.5" />
-                          SETTLEMENT
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          SALARY PAYOUT
                         </span>
                       ) : (
                         <InkStatusBadge status={entry.status || null} />
@@ -233,7 +273,7 @@ export const LedgerPage: React.FC = () => {
                       {entry.advanceTaken > 0 ? formatCurrency(entry.advanceTaken) : '—'}
                     </td>
 
-                    <td className="py-3.5 px-4 text-right font-tabular text-blue-700 dark:text-blue-400 font-bold">
+                    <td className="py-3.5 px-4 text-right font-tabular text-emerald-700 dark:text-emerald-400 font-bold">
                       {entry.amountPaid && entry.amountPaid > 0 ? formatCurrency(entry.amountPaid) : '—'}
                     </td>
 
@@ -248,24 +288,39 @@ export const LedgerPage: React.FC = () => {
         )}
       </div>
 
-      {/* Record Settlement Modal */}
+      {/* Complete Month Salary Payout Modal */}
       <Modal
         isOpen={isSettleModalOpen}
         onClose={() => setIsSettleModalOpen(false)}
-        title="Record Settlement / Payout"
-        subtitle={`Disburse payment to ${labourer.name}`}
+        title="Complete Month Salary"
+        subtitle={`Record & edit monthly salary payout for ${labourer.name}`}
       >
         <form onSubmit={handleSettlementSubmit} className="space-y-4">
           <div className="p-3 bg-brass-50 dark:bg-brass-900/30 rounded-xl border border-brass-200 dark:border-brass-800 flex items-center justify-between text-xs">
-            <span className="text-brass-800 dark:text-brass-300 font-medium">Current Outstanding Balance:</span>
+            <span className="text-brass-800 dark:text-brass-300 font-medium">Total Outstanding Balance:</span>
             <span className="font-bold font-tabular text-sm text-status-balance dark:text-sky-300">
               {formatCurrency(stats.balanceOwed)}
             </span>
           </div>
 
+          {/* Select & Edit Salary Month */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
-              Settlement Amount (₹)
+              Select Salary Month <span className="text-brass-600 dark:text-brass-400 font-normal">(Editable for any month)</span>
+            </label>
+            <input
+              type="month"
+              required
+              value={settleMonth}
+              onChange={handleMonthChange}
+              className="w-full px-3 py-2 text-sm font-semibold rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500"
+            />
+          </div>
+
+          {/* Editable Payout Amount */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
+              Salary Amount to Disburse (₹) <span className="text-brass-600 dark:text-brass-400 font-normal">(Editable)</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-gray-400">
@@ -275,17 +330,18 @@ export const LedgerPage: React.FC = () => {
                 type="number"
                 required
                 min="1"
-                max={stats.balanceOwed}
                 value={settleAmount}
                 onChange={(e) => setSettleAmount(e.target.value)}
+                placeholder="Enter salary payout amount"
                 className="w-full pl-8 pr-3 py-2 text-sm font-tabular font-bold text-ink dark:text-gray-100 rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark focus:ring-2 focus:ring-brass-500"
               />
             </div>
           </div>
 
+          {/* Payment Date */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
-              Settlement Date
+              Payment Date
             </label>
             <input
               type="date"
@@ -296,15 +352,16 @@ export const LedgerPage: React.FC = () => {
             />
           </div>
 
+          {/* Editable Reference Notes */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-ink/80 dark:text-gray-300 mb-1">
-              Notes / Reference
+              Notes / Reference <span className="text-brass-600 dark:text-brass-400 font-normal">(Editable)</span>
             </label>
             <input
               type="text"
               value={settleNotes}
               onChange={(e) => setSettleNotes(e.target.value)}
-              placeholder="e.g. Cash settlement payout"
+              placeholder="e.g. Full monthly salary cash payout"
               className="w-full px-3 py-2 text-sm rounded-lg border border-paper-border dark:border-paper-darkBorder bg-paper-light dark:bg-paper-dark text-ink dark:text-gray-100 focus:ring-2 focus:ring-brass-500"
             />
           </div>
@@ -318,8 +375,13 @@ export const LedgerPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" isLoading={isSubmittingSettle}>
-              Confirm Settlement
+            <Button
+              type="submit"
+              size="sm"
+              isLoading={isSubmittingSettle}
+              className="bg-emerald-700 hover:bg-emerald-800 text-white"
+            >
+              Complete Month Salary Payout
             </Button>
           </div>
         </form>

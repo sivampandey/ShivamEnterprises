@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { reportsApi } from '../api/reportsApi';
 import { MonthlyReportSummary } from '../api/types';
 import { getCurrentMonthISO, formatMonthDisplay, formatCurrency } from '../utils/formatters';
-import { exportMonthlyReportToCSV } from '../utils/exportCsv';
+import { exportMonthlyReportPDF } from '../utils/exportPdf';
 import { StatCard } from '../components/common/StatCard';
 import { Button } from '../components/common/Button';
 import { TableSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorBanner } from '../components/common/ErrorBanner';
 import {
   Calendar,
-  Download,
+  FileText,
   IndianRupee,
   ArrowUpDown,
   BookOpen,
@@ -46,9 +46,9 @@ export const ReportsPage: React.FC = () => {
     fetchReport();
   }, [fetchReport]);
 
-  const handleExportCSV = () => {
+  const handleExportPDF = () => {
     if (!report) return;
-    exportMonthlyReportToCSV(report.month, report.labourers);
+    exportMonthlyReportPDF(report.month, report, report.labourers);
   };
 
   const handleSort = (field: 'netBalanceOwed' | 'totalEarned' | 'totalAdvances') => {
@@ -93,14 +93,14 @@ export const ReportsPage: React.FC = () => {
             />
           </div>
 
-          {/* CSV Export Button */}
+          {/* PDF Download Button */}
           <Button
-            onClick={handleExportCSV}
-            variant="outline"
-            icon={<Download className="w-4 h-4" />}
+            onClick={handleExportPDF}
+            variant="primary"
+            icon={<FileText className="w-4 h-4" />}
             disabled={!report || report.labourers.length === 0}
           >
-            Export CSV
+            Download PDF Report
           </Button>
         </div>
       </div>
