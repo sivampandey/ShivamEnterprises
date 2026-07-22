@@ -15,14 +15,12 @@ import { getTodayISO } from '../utils/formatters';
 export const labourerApi = {
   getLabourers: async (includeInactive = false, search = ''): Promise<Labourer[]> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.get<Labourer[]>('/labourers', {
-          params: { includeInactive, search },
-        });
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through to mock persistence
+      const response = await apiClient.get<Labourer[]>('/labourers', {
+        params: { includeInactive, search },
+      });
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     let labourers = getStoredLabourers();
@@ -34,7 +32,6 @@ export const labourerApi = {
       labourers = labourers.filter((l) => l.name.toLowerCase().includes(q));
     }
 
-    // Attach current balance owed
     return labourers.map((l) => ({
       ...l,
       balanceOwed: computeLabourerBalanceOwed(l.id),
@@ -43,12 +40,10 @@ export const labourerApi = {
 
   addLabourer: async (name: string, dailyWage: number): Promise<Labourer> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.post<Labourer>('/labourers', { name, dailyWage });
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.post<Labourer>('/labourers', { name, dailyWage });
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const labourers = getStoredLabourers();
@@ -66,12 +61,10 @@ export const labourerApi = {
 
   updateLabourer: async (id: string, updates: { name?: string; dailyWage?: number; isActive?: boolean }): Promise<Labourer> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.put<Labourer>(`/labourers/${id}`, updates);
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.put<Labourer>(`/labourers/${id}`, updates);
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const labourers = getStoredLabourers();
@@ -89,18 +82,15 @@ export const labourerApi = {
 
   deleteLabourer: async (id: string, permanent = false): Promise<void> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        await apiClient.delete(`/labourers/${id}`, { params: { permanent } });
-        return;
-      }
-    } catch (e) {
-      // Fall through
+      await apiClient.delete(`/labourers/${id}`, { params: { permanent } });
+      return;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     let labourers = getStoredLabourers();
     if (permanent) {
       labourers = labourers.filter((l) => l.id !== id);
-      // Remove associated attendance and settlements
       const att = getStoredAttendance().filter((a) => a.labourerId !== id);
       saveStoredAttendance(att);
       const set = getStoredSettlements().filter((s) => s.labourerId !== id);
@@ -116,12 +106,10 @@ export const labourerApi = {
 
   getLedgerDetail: async (id: string): Promise<LabourerLedgerDetail> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.get<LabourerLedgerDetail>(`/labourers/${id}/ledger`);
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.get<LabourerLedgerDetail>(`/labourers/${id}/ledger`);
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const ledger = computeLabourerLedger(id);
@@ -138,12 +126,10 @@ export const labourerApi = {
     date = getTodayISO()
   ): Promise<void> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        await apiClient.post(`/labourers/${labourerId}/settle`, { amount, notes, date });
-        return;
-      }
-    } catch (e) {
-      // Fall through
+      await apiClient.post(`/labourers/${labourerId}/settle`, { amount, notes, date });
+      return;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const settlements = getStoredSettlements();

@@ -17,12 +17,10 @@ export interface RegisterItem {
 export const attendanceApi = {
   getRegisterForDate: async (date: string): Promise<RegisterItem[]> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.get<RegisterItem[]>('/attendance', { params: { date } });
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.get<RegisterItem[]>('/attendance', { params: { date } });
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const activeLabourers = getStoredLabourers().filter((l) => l.isActive);
@@ -54,17 +52,15 @@ export const attendanceApi = {
     advanceTaken: number
   ): Promise<AttendanceRecord> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.post<AttendanceRecord>('/attendance', {
-          labourerId,
-          date,
-          status,
-          advanceTaken,
-        });
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.post<AttendanceRecord>('/attendance', {
+        labourerId,
+        date,
+        status,
+        advanceTaken,
+      });
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const records = getStoredAttendance();

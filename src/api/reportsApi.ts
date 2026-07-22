@@ -9,14 +9,12 @@ import {
 export const reportsApi = {
   getMonthlyReport: async (month: string): Promise<MonthlyReportSummary> => {
     try {
-      if (import.meta.env.VITE_API_BASE_URL) {
-        const response = await apiClient.get<MonthlyReportSummary>('/reports/monthly', {
-          params: { month },
-        });
-        return response.data;
-      }
-    } catch (e) {
-      // Fall through
+      const response = await apiClient.get<MonthlyReportSummary>('/reports/monthly', {
+        params: { month },
+      });
+      return response.data;
+    } catch (e: any) {
+      if (e.response) throw e;
     }
 
     const labourers = getStoredLabourers();
