@@ -16,10 +16,22 @@ const app = express();
 app.use(helmet());
 
 // CORS Configuration
-const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const allowedOrigin = process.env.CORS_ORIGIN || '*';
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigin === '*' ||
+        origin === allowedOrigin ||
+        allowedOrigin.split(',').map((s) => s.trim()).includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );

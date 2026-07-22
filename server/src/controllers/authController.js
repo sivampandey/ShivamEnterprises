@@ -75,6 +75,12 @@ export const login = async (req, res, next) => {
         id: admin._id,
         username: admin.username,
       },
+      user: {
+        id: admin._id,
+        username: admin.username,
+        name: 'Shivam Shop Admin',
+        role: 'ADMIN',
+      },
       token, // Return token for compatibility if client stores JWT
     });
   } catch (error) {
@@ -92,6 +98,12 @@ export const getMe = async (req, res) => {
     admin: {
       id: req.admin._id,
       username: req.admin.username,
+    },
+    user: {
+      id: req.admin._id,
+      username: req.admin.username,
+      name: 'Shivam Shop Admin',
+      role: 'ADMIN',
     },
   });
 };
