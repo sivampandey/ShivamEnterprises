@@ -9,50 +9,29 @@ export interface LoginResponse {
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
     try {
-      const response = await apiClient.post<any>('/auth/login', { username, password });
+      const response = await apiClient.post<any>('/auth/login', {
+        username,
+        password,
+      });
+
       const data = response.data;
-
-      const user: User = data.user || {
-        id: data.admin?.id || 'usr-1',
-        username: data.admin?.username || username,
-        name: 'Shivam Shop Admin',
-        role: 'ADMIN',
-      };
-
       return {
         token: data.token,
-        user,
-      };
-    } catch (e: any) {
-      // Backend API returned an error (e.g. 401 Invalid Credentials or 400 Validation Error)
-      if (e.response) {
-        const errorMessage =
-          e.response.data?.error?.message ||
-          e.response.data?.message ||
-          (e.response.status === 401 ? 'Invalid username or password.' : 'Failed to connect to authentication server.');
-        throw new Error(errorMessage);
-      }
-
-      // If backend network request failed completely (e.g. server is down / offline)
-      // Fallback for standalone local demo testing ONLY if credentials match admin/admin123
-      const cleanUsername = username.trim().toLowerCase();
-      const cleanPassword = password.trim();
-
-      if (cleanUsername === 'admin' && cleanPassword === 'admin123') {
-        const mockToken = 'mock_jwt_token_shivam_admin_2026';
-        const mockUser: User = {
-          id: 'usr-1',
-          username: 'admin',
+        user: data.user || {
+          id: data.admin?.id || 'usr-1',
+          username: data.admin?.username || username,
           name: 'Shivam Shop Admin',
           role: 'ADMIN',
-        };
-        return { token: mockToken, user: mockUser };
-      }
-
-      throw new Error(e.message || 'Unable to connect to backend server. Please check server connection.');
+        },
+      };
+    } catch (e: any) {
+      const errorMessage =
+        e.response?.data?.error?.message ||
+        e.response?.data?.message ||
+        (e.response?.status === 401 ? 'Invalid username or password.' : 'Failed to connect to authentication server.');
+      throw new Error(errorMessage);
     }
   },
-
   getCurrentUser: async (): Promise<User> => {
     try {
       const response = await apiClient.get<any>('/auth/me');
