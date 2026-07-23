@@ -3,9 +3,14 @@ import { AttendanceRecord } from '../models/AttendanceRecord.js';
 import { Labourer } from '../models/Labourer.js';
 
 const upsertAttendanceSchema = z.object({
-  status: z.enum(['present', 'half', 'absent']).nullable().optional(),
+  // Allow null explicitly — when user clears attendance stamp
+  status: z
+    .union([z.enum(['present', 'half', 'absent']), z.null()])
+    .optional()
+    .transform((val) => (val === undefined ? undefined : val)), // keep undefined as-is
   withdrawal: z.number().min(0).optional(),
 });
+
 
 export const getAttendanceByDate = async (req, res, next) => {
   try {

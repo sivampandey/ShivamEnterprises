@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FC, ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, FC, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { attendanceApi, RegisterItem } from '../api/attendanceApi';
 import { AttendanceStatus } from '../api/types';
@@ -16,6 +16,7 @@ export const DashboardPage: FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
+  const advanceDebounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const todayISO = getTodayISO();
 
@@ -67,13 +68,10 @@ export const DashboardPage: FC = () => {
     }
   };
 
-  const handleAdvanceChange = async (labourerId: string, newAdvance: number) => {
-    const currentItem = registerItems.find((item) => item.labourer.id === labourerId);
-    if (!currentItem) return;
-
+  const handleAdvanceChange = (labourerId: string, newAdvance: number) => {
     const val = Math.max(0, isNaN(newAdvance) ? 0 : newAdvance);
 
-    // Optimistic UI update
+    // Optimistic UI update immediately (so user sees what they typed)
     setRegisterItems((prev) =>
       prev.map((item) => {
         if (item.labourer.id === labourerId) {
@@ -83,14 +81,26 @@ export const DashboardPage: FC = () => {
       })
     );
 
-    setUpdatingIds((prev) => ({ ...prev, [labourerId]: true }));
-    try {
-      await attendanceApi.updateAttendance(labourerId, selectedDate, currentItem.status, val);
-    } catch (err) {
-      fetchRegister();
-    } finally {
-      setUpdatingIds((prev) => ({ ...prev, [labourerId]: false }));
+    // Debounce: only save to server after user stops typing for 500ms
+    if (advanceDebounceRef.current[labourerId]) {
+      clearTimeout(advanceDebounceRef.current[labourerId]);
     }
+
+    advanceDebounceRef.current[labourerId] = setTimeout(async () => {
+      // Read current status fresh from state at save time
+      setRegisterItems((prev) => {
+        const currentItem = prev.find((item) => item.labourer.id === labourerId);
+        if (!currentItem) return prev;
+
+        setUpdatingIds((u) => ({ ...u, [labourerId]: true }));
+        attendanceApi
+          .updateAttendance(labourerId, selectedDate, currentItem.status, val)
+          .catch(() => fetchRegister())
+          .finally(() => setUpdatingIds((u) => ({ ...u, [labourerId]: false })));
+
+        return prev;
+      });
+    }, 500);
   };
 
   // Stats computation
